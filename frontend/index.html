@@ -8,45 +8,74 @@
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background: #f3f5f7; color: #1f2937; }
-    .app { display: flex; min-height: 100vh; }
+    
+    /* LOGIN */
+    .login-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #dfeee3, #f5f7f8); }
+    .login-box { width: 360px; background: white; padding: 35px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); text-align: center; }
+    .login-box h1 { margin-bottom: 5px; color: #198754; font-size: 24px; }
+    .login-box p { color: #777; font-size: 14px; margin-bottom: 20px; }
+    .login-box input { width: 100%; padding: 13px; margin-top: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
+    .login-box input:focus { border-color: #198754; }
+    .login-button { width: 100%; margin-top: 20px; padding: 13px; border: none; border-radius: 8px; background: #198754; color: white; font-size: 16px; cursor: pointer; font-weight: bold; }
+    .login-button:hover { background: #146c43; }
+    .error { color: #dc3545; margin-top: 12px; font-size: 14px; display: none; }
+
+    /* APP */
+    .app { display: none; min-height: 100vh; }
     .sidebar { width: 240px; background: #172033; color: white; padding: 25px 15px; flex-shrink: 0; }
-    .logo { font-size: 22px; font-weight: bold; margin-bottom: 30px; text-align: center; }
+    .logo { font-size: 20px; font-weight: bold; margin-bottom: 30px; text-align: center; color: #4ade80; }
     .menu button { display: block; width: 100%; padding: 13px 15px; margin: 5px 0; border: none; border-radius: 8px; background: transparent; color: #dce3ed; text-align: left; cursor: pointer; font-size: 15px; }
     .menu button:hover, .menu button.active { background: #2d3a52; color: white; }
     .main { flex: 1; padding: 25px 30px; min-width: 0; }
     .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
     .topbar h1 { margin: 0; font-size: 26px; }
-    .user { background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .user { background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-weight: bold; }
     .page { display: none; }
     .page.active { display: block; }
     .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); }
     .card-title { color: #6b7280; font-size: 14px; }
     .card-value { font-size: 28px; font-weight: bold; margin: 8px 0; }
-    .green { color: #198754; }
-    .red { color: #dc3545; }
-    .orange { color: #d97706; }
+    .green { color: #198754; font-weight: bold; }
+    .orange { color: #d97706; font-weight: bold; }
+    .red { color: #dc3545; font-weight: bold; }
     .section { margin-top: 25px; }
-    .camera-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .camera-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 15px; }
     .camera { background: #111827; border-radius: 12px; overflow: hidden; color: white; }
-    .camera-screen { height: 180px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #293548, #111827); font-size: 45px; }
+    .camera-screen { height: 160px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #293548, #111827); font-size: 40px; }
     .camera-info { padding: 15px; }
     .alert { background: white; padding: 15px; margin: 10px 0; border-left: 5px solid #dc3545; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     .alert.warning { border-left-color: #d97706; }
-    .table-container { width: 100%; overflow-x: auto; }
+    .table-container { width: 100%; overflow-x: auto; margin-top: 15px; }
     table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
     th, td { padding: 13px; text-align: left; border-bottom: 1px solid #eee; }
     th { color: #6b7280; font-size: 13px; }
-    .farm-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .farm-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
     .row { background: white; padding: 25px; text-align: center; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     .chart-container { background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); }
-    .chart-box { position: relative; height: 320px; }
+    .chart-box { position: relative; height: 300px; }
     @media(max-width: 900px) { .cards, .camera-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media(max-width: 600px) { .app { display: block; } .sidebar { width: 100%; } .cards, .camera-grid, .farm-map { grid-template-columns: 1fr; } }
+    @media(max-width: 600px) { .app { display: none; } .sidebar { width: 100%; } .cards, .camera-grid, .farm-map { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <div class="app">
+
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
+  <div class="login-page" id="loginPage">
+    <div class="login-box">
+      <h1>🌱 AIoT FARM</h1>
+      <p>Chim Cảnh Đức Khoa</p>
+      <div id="errorMsg" class="error">Sai tài khoản hoặc mật khẩu!</div>
+      <form onsubmit="handleLogin(event)">
+        <input type="text" id="username" placeholder="Tên đăng nhập (admin)" required>
+        <input type="password" id="password" placeholder="Mật khẩu (123456)" required>
+        <button class="login-button" type="submit">Đăng nhập</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- GIAO DIỆN QUẢN LÝ -->
+  <div class="app" id="appPage">
     <aside class="sidebar">
       <div class="logo">🌱 AIoT FARM</div>
       <div class="menu">
@@ -56,13 +85,14 @@
         <button onclick="showPage('alerts', this)">⚠️ Cảnh báo</button>
         <button onclick="showPage('history', this)">📜 Lịch sử</button>
         <button onclick="showPage('map', this)">🗺 Bản đồ Farm</button>
+        <button onclick="handleLogout()" style="color: #f87171; margin-top: 20px;">🚪 Đăng xuất</button>
       </div>
     </aside>
 
     <main class="main">
       <div class="topbar">
         <h1 id="pageTitle">Tổng quan</h1>
-        <div class="user">👤 Admin</div>
+        <div class="user">👤 <span id="userDisplay">admin</span></div>
       </div>
 
       <!-- DASHBOARD -->
@@ -95,15 +125,15 @@
           <div class="camera-grid">
             <div class="camera">
               <div class="camera-screen">📷</div>
-              <div class="camera-info"><strong>Dãy 1</strong><span class="green">● Hoạt động</span></div>
+              <div class="camera-info"><strong>Dãy 1</strong><span class="green">● Bình thường</span></div>
             </div>
             <div class="camera">
               <div class="camera-screen">📷</div>
-              <div class="camera-info"><strong>Dãy 2</strong><span class="orange">● Cần chú ý</span></div>
+              <div class="camera-info"><strong>Dãy 2</strong><span class="orange">● Chú ý</span></div>
             </div>
             <div class="camera">
               <div class="camera-screen">📷</div>
-              <div class="camera-info"><strong>Dãy 3</strong><span class="green">● Hoạt động</span></div>
+              <div class="camera-info"><strong>Dãy 3</strong><span class="green">● Bình thường</span></div>
             </div>
           </div>
         </div>
@@ -155,6 +185,38 @@
   </div>
 
   <script>
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value.trim();
+
+      if (u === "admin" && p === "123456") {
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('appPage').style.display = 'flex';
+        document.getElementById('userDisplay').textContent = u;
+        sessionStorage.setItem("userLoggedIn", "true");
+        initCharts();
+      } else {
+        document.getElementById('errorMsg').style.display = 'block';
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem("userLoggedIn");
+      document.getElementById('appPage').style.display = 'none';
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    // Tự động giữ phiên đăng nhập nếu chưa đóng trình duyệt
+    if (sessionStorage.getItem("userLoggedIn") === "true") {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appPage').style.display = 'flex';
+      setTimeout(initCharts, 100);
+    }
+
     const zones = ["Dãy 1", "Dãy 2", "Dãy 3"];
     const fullGrid = document.getElementById("fullCameraGrid");
     const mapGrid = document.getElementById("mapGrid");
@@ -177,18 +239,22 @@
       document.getElementById("pageTitle").textContent = pageTitles[id];
     }
 
-    const hours = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
-    new Chart(document.getElementById("temperatureChart"), {
-      type: "line",
-      data: { labels: hours, datasets: [{ label: "Nhiệt độ (°C)", data: [25, 24, 27, 32, 30, 26], borderColor: "#198754", tension: 0.3 }] },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-
-    new Chart(document.getElementById("humidityChart"), {
-      type: "line",
-      data: { labels: hours, datasets: [{ label: "Độ ẩm (%)", data: [80, 85, 75, 60, 68, 78], borderColor: "#0d6efd", tension: 0.3 }] },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
+    let chartsInitialized = false;
+    function initCharts() {
+      if (chartsInitialized) return;
+      chartsInitialized = true;
+      const hours = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
+      new Chart(document.getElementById("temperatureChart"), {
+        type: "line",
+        data: { labels: hours, datasets: [{ label: "Nhiệt độ (°C)", data: [25, 24, 27, 32, 30, 26], borderColor: "#198754", tension: 0.3 }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      new Chart(document.getElementById("humidityChart"), {
+        type: "line",
+        data: { labels: hours, datasets: [{ label: "Độ ẩm (%)", data: [80, 85, 75, 60, 68, 78], borderColor: "#0d6efd", tension: 0.3 }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
   </script>
 </body>
 </html>
