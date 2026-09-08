@@ -1,0 +1,2233 @@
+from flask import Flask, render_template_string, request, redirect, url_for, session
+
+app = Flask(__name__)
+
+# ============================================================
+# CẤU HÌNH
+# ============================================================
+
+app.secret_key = "khoa_smart_farm_secret_key"
+
+# Tài khoản đăng nhập
+USER_DATABASE = {
+    "admin": "123456"
+}
+
+
+# ============================================================
+# GIAO DIỆN HTML
+# ============================================================
+
+HTML_UI = r"""
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>AIoT Smart Farm</title>
+
+
+<!-- =====================================================
+     CHART.JS
+===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+/* =====================================================
+   GENERAL
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    font-family: Arial, sans-serif;
+
+    background: #f3f5f7;
+
+    color: #1f2937;
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-page {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #dfeee3,
+            #f5f7f8
+        );
+}
+
+
+.login-box {
+
+    width: 360px;
+
+    background: white;
+
+    padding: 35px;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.12);
+
+    text-align: center;
+}
+
+
+.login-box h1 {
+
+    margin-bottom: 5px;
+}
+
+
+.login-box p {
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+.login-box input {
+
+    width: 100%;
+
+    padding: 13px;
+
+    margin-top: 12px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+}
+
+
+.login-button {
+
+    width: 100%;
+
+    margin-top: 18px;
+
+    padding: 13px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #198754;
+
+    color: white;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+
+.login-button:hover {
+
+    background: #146c43;
+}
+
+
+.error {
+
+    color: #dc3545;
+
+    margin-top: 10px;
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
+.app {
+
+    display: flex;
+
+    min-height: 100vh;
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+
+    width: 240px;
+
+    background: #172033;
+
+    color: white;
+
+    padding: 25px 15px;
+
+    flex-shrink: 0;
+}
+
+
+.logo {
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+    margin-bottom: 30px;
+
+    text-align: center;
+}
+
+
+.menu button {
+
+    display: block;
+
+    width: 100%;
+
+    padding: 13px 15px;
+
+    margin: 5px 0;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #dce3ed;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    font-size: 15px;
+}
+
+
+.menu button:hover,
+.menu button.active {
+
+    background: #2d3a52;
+
+    color: white;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main {
+
+    flex: 1;
+
+    padding: 25px 30px;
+
+    min-width: 0;
+}
+
+
+.topbar {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 25px;
+}
+
+
+.topbar h1 {
+
+    margin: 0;
+
+    font-size: 26px;
+}
+
+
+.user {
+
+    background: white;
+
+    padding: 10px 15px;
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.05);
+}
+
+
+/* =====================================================
+   PAGE
+===================================================== */
+
+.page {
+
+    display: none;
+}
+
+
+.page.active {
+
+    display: block;
+}
+
+
+/* =====================================================
+   CARDS
+===================================================== */
+
+.cards {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 16px;
+}
+
+
+.card {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,0.06);
+}
+
+
+.card-title {
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+
+.card-value {
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+    margin-top: 8px;
+
+    margin-bottom: 8px;
+}
+
+
+.green {
+
+    color: #198754;
+}
+
+
+.red {
+
+    color: #dc3545;
+}
+
+
+.orange {
+
+    color: #d97706;
+}
+
+
+/* =====================================================
+   SECTION
+===================================================== */
+
+.section {
+
+    margin-top: 25px;
+}
+
+
+.section h2 {
+
+    font-size: 20px;
+}
+
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
+.camera-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 18px;
+}
+
+
+.camera {
+
+    background: #111827;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    color: white;
+}
+
+
+.camera-screen {
+
+    height: 180px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #293548,
+            #111827
+        );
+
+    font-size: 45px;
+}
+
+
+.camera-info {
+
+    padding: 15px;
+}
+
+
+.camera-info strong {
+
+    display: block;
+
+    margin-bottom: 7px;
+}
+
+
+.camera-status {
+
+    font-size: 14px;
+
+    margin-bottom: 5px;
+}
+
+
+/* =====================================================
+   ALERT
+===================================================== */
+
+.alert {
+
+    background: white;
+
+    padding: 15px;
+
+    margin: 10px 0;
+
+    border-left:
+        5px solid #dc3545;
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.05);
+}
+
+
+.alert.warning {
+
+    border-left-color: #d97706;
+}
+
+
+.alert small {
+
+    color: #777;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.table-container {
+
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+table {
+
+    width: 100%;
+
+    background: white;
+
+    border-collapse: collapse;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+
+th,
+td {
+
+    padding: 13px;
+
+    text-align: left;
+
+    border-bottom:
+        1px solid #eee;
+}
+
+
+th {
+
+    color: #6b7280;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   FARM MAP
+===================================================== */
+
+.farm-map {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 15px;
+}
+
+
+.row {
+
+    background: white;
+
+    padding: 25px;
+
+    text-align: center;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.05);
+}
+
+
+/* =====================================================
+   CHART
+===================================================== */
+
+.chart-container {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    margin-top: 20px;
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,0.06);
+}
+
+
+.chart-container h3 {
+
+    margin-top: 0;
+
+    font-size: 18px;
+}
+
+
+.chart-box {
+
+    position: relative;
+
+    height: 320px;
+}
+
+
+/* =====================================================
+   CLOUD
+===================================================== */
+
+.cloud-info {
+
+    line-height: 1.8;
+
+    font-size: 15px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width: 1100px) {
+
+    .cards {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .camera-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .farm-map {
+
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+}
+
+
+@media(max-width: 750px) {
+
+    .sidebar {
+
+        width: 190px;
+
+        padding: 20px 10px;
+    }
+
+    .main {
+
+        padding: 20px;
+    }
+
+    .camera-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .farm-map {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media(max-width: 550px) {
+
+    .app {
+
+        display: block;
+    }
+
+    .sidebar {
+
+        width: 100%;
+
+        min-height: auto;
+    }
+
+    .menu {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 4px;
+    }
+
+    .menu button {
+
+        margin: 2px 0;
+    }
+
+    .cards {
+
+        grid-template-columns: 1fr;
+    }
+
+    .topbar {
+
+        align-items: flex-start;
+
+        gap: 10px;
+
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+{% if not session.get('logged_in') %}
+
+
+<!-- =====================================================
+     LOGIN
+===================================================== -->
+
+<div class="login-page">
+
+    <div class="login-box">
+
+        <h1>
+            🌱 AIoT FARM
+        </h1>
+
+        <p>
+            Hệ thống giám sát nông trại thông minh
+        </p>
+
+
+        {% if error %}
+
+        <div class="error">
+            {{ error }}
+        </div>
+
+        {% endif %}
+
+
+        <form method="POST">
+
+            <input
+                type="text"
+                name="username"
+                placeholder="Tên đăng nhập"
+                required
+            >
+
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Mật khẩu"
+                required
+            >
+
+
+            <button
+                class="login-button"
+                type="submit"
+            >
+
+                Đăng nhập
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+{% else %}
+
+
+<!-- =====================================================
+     MAIN APPLICATION
+===================================================== -->
+
+<div class="app">
+
+
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
+
+<aside class="sidebar">
+
+
+    <div class="logo">
+
+        🌱 AIoT FARM
+
+    </div>
+
+
+    <div class="menu">
+
+
+        <button
+            class="active"
+            onclick="showPage('dashboard', this)">
+
+            🏠 Tổng quan
+
+        </button>
+
+
+        <button
+            onclick="showPage('environment', this)">
+
+            🌡 Môi trường
+
+        </button>
+
+
+        <button
+            onclick="showPage('camera', this)">
+
+            📷 Camera
+
+        </button>
+
+
+        <button
+            onclick="showPage('alerts', this)">
+
+            ⚠️ Cảnh báo
+
+        </button>
+
+
+        <button
+            onclick="showPage('history', this)">
+
+            📜 Lịch sử
+
+        </button>
+
+
+        <button
+            onclick="showPage('map', this)">
+
+            🗺 Bản đồ Farm
+
+        </button>
+
+
+        <button
+            onclick="showPage('cloud', this)">
+
+            ☁️ Video Cloud
+
+        </button>
+
+
+        <button
+            onclick="window.location.href='/logout'">
+
+            🚪 Đăng xuất
+
+        </button>
+
+
+    </div>
+
+</aside>
+
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
+<main class="main">
+
+
+<div class="topbar">
+
+    <h1 id="pageTitle">
+        Tổng quan
+    </h1>
+
+
+    <div class="user">
+
+        👤
+        {{ session.get('username') }}
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     DASHBOARD
+===================================================== -->
+
+<section
+    id="dashboard"
+    class="page active">
+
+
+    <div class="cards">
+
+
+        <!-- TEMPERATURE -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                🌡 Nhiệt độ
+
+            </div>
+
+
+            <div class="card-value">
+
+                31°C
+
+            </div>
+
+
+            <div class="green">
+
+                ● Bình thường
+
+            </div>
+
+        </div>
+
+
+        <!-- HUMIDITY -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                💧 Độ ẩm
+
+            </div>
+
+
+            <div class="card-value">
+
+                72%
+
+            </div>
+
+
+            <div class="green">
+
+                ● Bình thường
+
+            </div>
+
+        </div>
+
+
+        <!-- CAMERA -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                📷 Camera
+
+            </div>
+
+
+            <div class="card-value">
+
+                5/5
+
+            </div>
+
+
+            <div class="green">
+
+                ● Online
+
+            </div>
+
+        </div>
+
+
+        <!-- ALERT -->
+
+        <div class="card">
+
+            <div class="card-title">
+
+                ⚠️ Sự kiện hôm nay
+
+            </div>
+
+
+            <div class="card-value">
+
+                2
+
+            </div>
+
+
+            <div class="orange">
+
+                ● Cần kiểm tra
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- CAMERA PREVIEW -->
+
+    <div class="section">
+
+        <h2>
+            📷 Camera gần đây
+        </h2>
+
+
+        <div class="camera-grid">
+
+
+            <div class="camera">
+
+                <div class="camera-screen">
+
+                    📷
+
+                </div>
+
+
+                <div class="camera-info">
+
+                    <strong>
+                        Camera Dãy 1
+                    </strong>
+
+                    <span class="green">
+                        ● Online
+                    </span>
+
+                    <br>
+
+                    Không phát hiện
+
+                </div>
+
+            </div>
+
+
+
+            <div class="camera">
+
+                <div class="camera-screen">
+
+                    📷
+
+                </div>
+
+
+                <div class="camera-info">
+
+                    <strong>
+                        Camera Dãy 2
+                    </strong>
+
+                    <span class="orange">
+                        ● Phát hiện mèo
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="camera">
+
+                <div class="camera-screen">
+
+                    📷
+
+                </div>
+
+
+                <div class="camera-info">
+
+                    <strong>
+                        Camera Dãy 3
+                    </strong>
+
+                    <span class="red">
+                        ● Phát hiện rắn
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     ENVIRONMENT
+===================================================== -->
+
+<section
+    id="environment"
+    class="page">
+
+
+    <div class="cards">
+
+
+        <div class="card">
+
+            <div class="card-title">
+
+                🌡 Nhiệt độ hiện tại
+
+            </div>
+
+
+            <div class="card-value">
+
+                31°C
+
+            </div>
+
+
+            <div class="green">
+
+                ● Bình thường
+
+            </div>
+
+        </div>
+
+
+
+        <div class="card">
+
+            <div class="card-title">
+
+                💧 Độ ẩm hiện tại
+
+            </div>
+
+
+            <div class="card-value">
+
+                72%
+
+            </div>
+
+
+            <div class="green">
+
+                ● Bình thường
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- TEMPERATURE CHART -->
+
+    <div class="chart-container">
+
+        <h3>
+            🌡 Nhiệt độ trong 24 giờ
+        </h3>
+
+
+        <div class="chart-box">
+
+            <canvas
+                id="temperatureChart">
+            </canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- HUMIDITY CHART -->
+
+    <div class="chart-container">
+
+        <h3>
+            💧 Độ ẩm trong 24 giờ
+        </h3>
+
+
+        <div class="chart-box">
+
+            <canvas
+                id="humidityChart">
+            </canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- SENSOR STATUS -->
+
+    <div class="section">
+
+        <h2>
+            🔧 Trạng thái thiết bị
+        </h2>
+
+
+        <div class="table-container">
+
+        <table>
+
+            <tr>
+
+                <th>
+                    Thiết bị
+                </th>
+
+                <th>
+                    Giá trị
+                </th>
+
+                <th>
+                    Trạng thái
+                </th>
+
+            </tr>
+
+
+            <tr>
+
+                <td>
+                    DHT22
+                </td>
+
+                <td>
+                    31°C / 72%
+                </td>
+
+                <td class="green">
+                    ● Online
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td>
+                    PIR Dãy 1
+                </td>
+
+                <td>
+                    Không chuyển động
+                </td>
+
+                <td class="green">
+                    ● Online
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td>
+                    PIR Dãy 2
+                </td>
+
+                <td>
+                    Không chuyển động
+                </td>
+
+                <td class="green">
+                    ● Online
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td>
+                    Hệ thống phun sương
+                </td>
+
+                <td>
+                    OFF
+                </td>
+
+                <td class="green">
+                    ● Bình thường
+                </td>
+
+            </tr>
+
+        </table>
+
+        </div>
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     CAMERA
+===================================================== -->
+
+<section
+    id="camera"
+    class="page">
+
+
+    <h2>
+        📷 Hệ thống Camera
+    </h2>
+
+
+    <p>
+        Chọn camera để xem hình ảnh trực tiếp.
+    </p>
+
+
+    <div
+        class="camera-grid"
+        id="cameraGrid">
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     ALERT
+===================================================== -->
+
+<section
+    id="alerts"
+    class="page">
+
+
+    <h2>
+        ⚠️ Cảnh báo
+    </h2>
+
+
+    <div class="alert">
+
+        <b>
+            🔴 Dãy 3 — Phát hiện rắn
+        </b>
+
+        <br>
+
+        <small>
+            Confidence: 91%
+            · 14:32:15
+        </small>
+
+    </div>
+
+
+    <div class="alert warning">
+
+        <b>
+            🟠 Dãy 2 — Phát hiện chuột
+        </b>
+
+        <br>
+
+        <small>
+            Confidence: 87%
+            · 13:18:22
+        </small>
+
+    </div>
+
+
+    <div class="alert warning">
+
+        <b>
+            🟡 Dãy 5 — Phát hiện người lạ
+        </b>
+
+        <br>
+
+        <small>
+            Confidence: 95%
+            · 10:05:41
+        </small>
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     HISTORY
+===================================================== -->
+
+<section
+    id="history"
+    class="page">
+
+
+    <h2>
+        📜 Lịch sử AI
+    </h2>
+
+
+    <div class="table-container">
+
+    <table>
+
+        <tr>
+
+            <th>
+                Thời gian
+            </th>
+
+            <th>
+                Camera
+            </th>
+
+            <th>
+                Đối tượng
+            </th>
+
+            <th>
+                Confidence
+            </th>
+
+            <th>
+                Trạng thái
+            </th>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                14:32:15
+            </td>
+
+            <td>
+                Dãy 3
+            </td>
+
+            <td>
+                🐍 Rắn
+            </td>
+
+            <td>
+                91%
+            </td>
+
+            <td class="red">
+                Cảnh báo
+            </td>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                13:18:22
+            </td>
+
+            <td>
+                Dãy 2
+            </td>
+
+            <td>
+                🐀 Chuột
+            </td>
+
+            <td>
+                87%
+            </td>
+
+            <td class="orange">
+                Cần kiểm tra
+            </td>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                10:05:41
+            </td>
+
+            <td>
+                Dãy 5
+            </td>
+
+            <td>
+                👤 Người lạ
+            </td>
+
+            <td>
+                95%
+            </td>
+
+            <td class="red">
+                Cảnh báo
+            </td>
+
+        </tr>
+
+    </table>
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     FARM MAP
+===================================================== -->
+
+<section
+    id="map"
+    class="page">
+
+
+    <h2>
+        🗺 Bản đồ Farm
+    </h2>
+
+
+    <p>
+        Trạng thái camera tại từng khu vực.
+    </p>
+
+
+    <div
+        class="farm-map"
+        id="farmMap">
+    </div>
+
+
+</section>
+
+
+<!-- =====================================================
+     CLOUD
+===================================================== -->
+
+<section
+    id="cloud"
+    class="page">
+
+
+    <h2>
+        ☁️ Video Cloud
+    </h2>
+
+
+    <div class="card cloud-info">
+
+        <h3>
+            Lưu trữ video
+        </h3>
+
+
+        <p>
+            Video sẽ được lưu lên Cloud
+            khi hệ thống phát hiện sự kiện.
+        </p>
+
+
+        <p>
+            🐀 Chuột → lưu video
+        </p>
+
+
+        <p>
+            🐍 Rắn → lưu video
+        </p>
+
+
+        <p>
+            👤 Người lạ → lưu video
+        </p>
+
+
+        <p class="green">
+
+            ✓ Không cần lưu video
+            lâu dài trên PC.
+
+        </p>
+
+
+        <p>
+            Hiện tại đây là giao diện mẫu.
+            Sau này có thể kết nối
+            Google Drive, Google Cloud,
+            Amazon S3 hoặc dịch vụ Cloud khác.
+        </p>
+
+    </div>
+
+
+</section>
+
+
+</main>
+
+</div>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script>
+
+
+/* =========================================================
+   CAMERA LIST
+========================================================= */
+
+const cameras = [
+
+    "Dãy 1",
+    "Dãy 2",
+    "Dãy 3",
+    "Dãy 4",
+    "Dãy 5",
+    "Dãy 6"
+
+];
+
+
+const cameraGrid =
+    document.getElementById(
+        "cameraGrid"
+    );
+
+
+cameras.forEach(function(camera) {
+
+    cameraGrid.innerHTML += `
+
+        <div class="camera">
+
+            <div class="camera-screen">
+
+                📷
+
+            </div>
+
+            <div class="camera-info">
+
+                <strong>
+
+                    Camera ${camera}
+
+                </strong>
+
+                <span class="green">
+
+                    ● Online
+
+                </span>
+
+                <br>
+
+                AI:
+                Đang hoạt động
+
+            </div>
+
+        </div>
+
+    `;
+
+});
+
+
+/* =========================================================
+   FARM MAP
+========================================================= */
+
+const farmMap =
+    document.getElementById(
+        "farmMap"
+    );
+
+
+cameras.forEach(function(camera) {
+
+    farmMap.innerHTML += `
+
+        <div class="row">
+
+            <h3>
+
+                📷 ${camera}
+
+            </h3>
+
+            <div class="green">
+
+                ● Online
+
+            </div>
+
+        </div>
+
+    `;
+
+});
+
+
+/* =========================================================
+   PAGE NAVIGATION
+========================================================= */
+
+const pageTitles = {
+
+    dashboard:
+        "Tổng quan",
+
+    environment:
+        "Môi trường",
+
+    camera:
+        "Camera",
+
+    alerts:
+        "Cảnh báo",
+
+    history:
+        "Lịch sử",
+
+    map:
+        "Bản đồ Farm",
+
+    cloud:
+        "Video Cloud"
+
+};
+
+
+function showPage(
+    pageId,
+    button
+) {
+
+
+    /* Ẩn tất cả trang */
+
+    document
+        .querySelectorAll(".page")
+        .forEach(function(page) {
+
+            page.classList.remove(
+                "active"
+            );
+
+        });
+
+
+    /* Hiện trang được chọn */
+
+    document
+        .getElementById(pageId)
+        .classList.add("active");
+
+
+    /* Xóa active menu */
+
+    document
+        .querySelectorAll(
+            ".menu button"
+        )
+        .forEach(function(btn) {
+
+            btn.classList.remove(
+                "active"
+            );
+
+        });
+
+
+    /* Active menu hiện tại */
+
+    button.classList.add(
+        "active"
+    );
+
+
+    /* Đổi tiêu đề */
+
+    document
+        .getElementById("pageTitle")
+        .textContent =
+        pageTitles[pageId];
+
+}
+
+
+/* =========================================================
+   24 HOURS
+========================================================= */
+
+const hours = [
+
+    "00:00",
+    "01:00",
+    "02:00",
+    "03:00",
+    "04:00",
+    "05:00",
+    "06:00",
+    "07:00",
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
+    "19:00",
+    "20:00",
+    "21:00",
+    "22:00",
+    "23:00"
+
+];
+
+
+/* =========================================================
+   TEMPERATURE DATA
+========================================================= */
+
+const temperatureData = [
+
+    25,
+    25,
+    24.8,
+    24.5,
+    24.3,
+    24.5,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    33,
+    32,
+    31,
+    30,
+    29,
+    28,
+    27,
+    26,
+    25.5
+
+];
+
+
+/* =========================================================
+   TEMPERATURE CHART
+========================================================= */
+
+new Chart(
+
+    document.getElementById(
+        "temperatureChart"
+    ),
+
+    {
+
+        type: "line",
+
+        data: {
+
+            labels: hours,
+
+            datasets: [
+
+                {
+
+                    label:
+                        "Nhiệt độ (°C)",
+
+                    data:
+                        temperatureData,
+
+                    tension: 0.3,
+
+                    fill: false
+
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            interaction: {
+
+                mode: "index",
+
+                intersect: false
+
+            },
+
+            scales: {
+
+                y: {
+
+                    title: {
+
+                        display: true,
+
+                        text: "°C"
+
+                    }
+
+                },
+
+                x: {
+
+                    title: {
+
+                        display: true,
+
+                        text: "Thời gian"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+);
+
+
+/* =========================================================
+   HUMIDITY DATA
+========================================================= */
+
+const humidityData = [
+
+    82,
+    83,
+    84,
+    85,
+    84,
+    82,
+    80,
+    78,
+    75,
+    73,
+    70,
+    68,
+    65,
+    63,
+    61,
+    62,
+    65,
+    68,
+    71,
+    73,
+    75,
+    77,
+    79,
+    81
+
+];
+
+
+/* =========================================================
+   HUMIDITY CHART
+========================================================= */
+
+new Chart(
+
+    document.getElementById(
+        "humidityChart"
+    ),
+
+    {
+
+        type: "line",
+
+        data: {
+
+            labels: hours,
+
+            datasets: [
+
+                {
+
+                    label:
+                        "Độ ẩm (%)",
+
+                    data:
+                        humidityData,
+
+                    tension: 0.3,
+
+                    fill: false
+
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            interaction: {
+
+                mode: "index",
+
+                intersect: false
+
+            },
+
+            scales: {
+
+                y: {
+
+                    title: {
+
+                        display: true,
+
+                        text: "%"
+
+                    }
+
+                },
+
+                x: {
+
+                    title: {
+
+                        display: true,
+
+                        text: "Thời gian"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+);
+
+</script>
+
+
+{% endif %}
+
+
+</body>
+
+</html>
+"""
+
+
+# ============================================================
+# LOGIN ROUTE
+# ============================================================
+
+@app.route("/", methods=["GET", "POST"])
+def login():
+
+    error_message = None
+
+    if request.method == "POST":
+
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # Kiểm tra tài khoản
+        if (
+            username in USER_DATABASE
+            and USER_DATABASE[username] == password
+        ):
+
+            session["logged_in"] = True
+
+            session["username"] = username
+
+            return redirect(
+                url_for("login")
+            )
+
+        else:
+
+            error_message = (
+                "Sai tài khoản hoặc mật khẩu!"
+            )
+
+    return render_template_string(
+
+        HTML_UI,
+
+        error=error_message
+
+    )
+
+
+# ============================================================
+# LOGOUT
+# ============================================================
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# ============================================================
+# RUN SERVER
+# ============================================================
+
+if __name__ == "__main__":
+
+    print()
+    print("==============================================")
+    print("           AIoT SMART FARM SERVER")
+    print("==============================================")
+    print()
+
+    print("Truy cập trên máy tính:")
+    print("http://127.0.0.1:5000")
+    print()
+
+    print("Truy cập từ điện thoại cùng Wi-Fi:")
+    print("http://IP-MAY-TINH:5000")
+    print()
+
+    print("Tài khoản:")
+    print("Username: admin")
+    print("Password: 123456")
+    print()
+
+    print("Server đang khởi động...")
+    print()
+
+
+    app.run(
+
+        host="0.0.0.0",
+
+        port=5000,
+
+        debug=True
+
+    )
