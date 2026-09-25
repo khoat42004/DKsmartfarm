@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime, Text
 from sqlalchemy.sql import func
 from backend.app.database.database import Base
 
@@ -69,4 +69,14 @@ class Alert(Base):
     is_resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     resolved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+# Bảng lưu cảnh báo trực tiếp từ Camera AI Laptop
+class AIAlert(Base):
+    __tablename__ = "ai_alerts"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    target_type = Column(String(50), nullable=False)  # 'ran' hoặc 'chuot'
+    confidence = Column(Float, nullable=False)
+    image_base64 = Column(Text, nullable=True)        # Ảnh JPEG Base64
     created_at = Column(DateTime(timezone=True), server_default=func.now())
