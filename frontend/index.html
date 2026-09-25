@@ -44,16 +44,28 @@
     .camera { background: #111827; border-radius: 12px; overflow: hidden; color: white; }
     .camera-screen { height: 160px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #293548, #111827); font-size: 40px; }
     .camera-info { padding: 15px; }
-    .alert { background: white; padding: 15px; margin: 10px 0; border-left: 5px solid #dc3545; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .alert.warning { border-left-color: #d97706; }
+    
+    /* ALERT ITEMS */
+    .alert-card { background: white; padding: 15px 20px; margin: 12px 0; border-left: 6px solid #dc3545; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+    .alert-card.warning { border-left-color: #d97706; }
+    .alert-thumb { width: 75px; height: 55px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #ddd; transition: transform 0.2s; }
+    .alert-thumb:hover { transform: scale(1.08); }
+    .empty-state { background: white; padding: 25px; border-radius: 10px; text-align: center; color: #6b7280; font-size: 15px; }
+
     .table-container { width: 100%; overflow-x: auto; margin-top: 15px; }
     table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
-    th, td { padding: 13px; text-align: left; border-bottom: 1px solid #eee; }
+    th, td { padding: 13px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
     th { color: #6b7280; font-size: 13px; }
     .farm-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
     .row { background: white; padding: 25px; text-align: center; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     .chart-container { background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); }
     .chart-box { position: relative; height: 300px; }
+
+    /* MODAL XEM ẢNH */
+    .image-modal { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; }
+    .image-modal img { max-width: 90%; max-height: 85%; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+    .image-modal-close { position: absolute; top: 20px; right: 25px; color: white; font-size: 35px; font-weight: bold; cursor: pointer; }
+
     @media(max-width: 900px) { .cards, .camera-grid { grid-template-columns: repeat(2, 1fr); } }
     @media(max-width: 600px) { .app { display: none; } .sidebar { width: 100%; } .cards, .camera-grid, .farm-map { grid-template-columns: 1fr; } }
   </style>
@@ -67,8 +79,8 @@
       <p>Chim Cảnh Đức Khoa</p>
       <div id="errorMsg" class="error">Sai tài khoản hoặc mật khẩu!</div>
       <form onsubmit="handleLogin(event)">
-        <input type="text" id="username" placeholder="Tên đăng nhập " required>
-        <input type="password" id="password" placeholder="Mật khẩu " required>
+        <input type="text" id="username" placeholder="Tên đăng nhập" required>
+        <input type="password" id="password" placeholder="Mật khẩu" required>
         <button class="login-button" type="submit">Đăng nhập</button>
       </form>
     </div>
@@ -115,8 +127,8 @@
           </div>
           <div class="card">
             <div class="card-title">⚠️ Cảnh báo AI</div>
-            <div class="card-value">1</div>
-            <div class="orange">● Cần kiểm tra</div>
+            <div class="card-value" id="alertCountCard">0</div>
+            <div id="alertStatusText" class="green">● An toàn</div>
           </div>
         </div>
 
@@ -125,15 +137,15 @@
           <div class="camera-grid">
             <div class="camera">
               <div class="camera-screen">📷</div>
-              <div class="camera-info"><strong>Dãy 1</strong><span class="green">● Bình thường</span></div>
+              <div class="camera-info"><strong>Dãy 1 (Chuồng chim)</strong><span class="green">● Hoạt động</span></div>
             </div>
             <div class="camera">
               <div class="camera-screen">📷</div>
-              <div class="camera-info"><strong>Dãy 2</strong><span class="orange">● Chú ý</span></div>
+              <div class="camera-info"><strong>Dãy 2 (Kho thức ăn)</strong><span class="green">● Hoạt động</span></div>
             </div>
             <div class="camera">
               <div class="camera-screen">📷</div>
-              <div class="camera-info"><strong>Dãy 3</strong><span class="green">● Bình thường</span></div>
+              <div class="camera-info"><strong>Dãy 3 (Khu nuôi Cu gáy)</strong><span class="green">● Hoạt động</span></div>
             </div>
           </div>
         </div>
@@ -159,9 +171,10 @@
 
       <!-- ALERTS -->
       <section id="alerts" class="page">
-        <h2>⚠️ Cảnh báo AI</h2>
-        <div class="alert"><b>🔴 Dãy 3 — Phát hiện rắn</b><br><small>Độ tin cậy: 91% · 14:32:15</small></div>
-        <div class="alert warning"><b>🟠 Dãy 2 — Phát hiện chuột</b><br><small>Độ tin cậy: 87% · 13:18:22</small></div>
+        <h2>⚠️ Danh sách cảnh báo AI trực tiếp</h2>
+        <div id="alertsContainer">
+          <div class="empty-state">Đang nạp dữ liệu cảnh báo từ hệ thống...</div>
+        </div>
       </section>
 
       <!-- HISTORY -->
@@ -169,9 +182,18 @@
         <h2>📜 Lịch sử phát hiện</h2>
         <div class="table-container">
           <table>
-            <tr><th>Thời gian</th><th>Khu vực</th><th>Đối tượng</th><th>Độ tin cậy</th></tr>
-            <tr><td>14:32:15</td><td>Dãy 3</td><td>🐍 Rắn</td><td class="red">91%</td></tr>
-            <tr><td>13:18:22</td><td>Dãy 2</td><td>🐀 Chuột</td><td class="orange">87%</td></tr>
+            <thead>
+              <tr>
+                <th>Thời gian</th>
+                <th>Khu vực</th>
+                <th>Đối tượng</th>
+                <th>Độ tin cậy</th>
+                <th>Bằng chứng ảnh</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr><td colspan="5" style="text-align: center; color: #888;">Đang cập nhật...</td></tr>
+            </tbody>
           </table>
         </div>
       </section>
@@ -182,6 +204,12 @@
         <div class="farm-map" id="mapGrid"></div>
       </section>
     </main>
+  </div>
+
+  <!-- POPUP XEM ẢNH BẰNG CHỨNG -->
+  <div class="image-modal" id="imageModal" onclick="closeModal()">
+    <span class="image-modal-close">&times;</span>
+    <img id="modalImg" src="" alt="Ảnh bằng chứng AI">
   </div>
 
   <script>
@@ -196,6 +224,7 @@
         document.getElementById('userDisplay').textContent = u;
         sessionStorage.setItem("userLoggedIn", "true");
         initCharts();
+        fetchRealtimeAlerts();
       } else {
         document.getElementById('errorMsg').style.display = 'block';
       }
@@ -210,14 +239,14 @@
       document.getElementById('errorMsg').style.display = 'none';
     }
 
-    // Tự động giữ phiên đăng nhập nếu chưa đóng trình duyệt
     if (sessionStorage.getItem("userLoggedIn") === "true") {
       document.getElementById('loginPage').style.display = 'none';
       document.getElementById('appPage').style.display = 'flex';
       setTimeout(initCharts, 100);
+      fetchRealtimeAlerts();
     }
 
-    const zones = ["Dãy 1", "Dãy 2", "Dãy 3"];
+    const zones = ["Dãy 1 (Chuồng chim)", "Dãy 2 (Kho thức ăn)", "Dãy 3 (Khu nuôi Cu gáy)"];
     const fullGrid = document.getElementById("fullCameraGrid");
     const mapGrid = document.getElementById("mapGrid");
 
@@ -237,6 +266,7 @@
       document.querySelectorAll(".menu button").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById("pageTitle").textContent = pageTitles[id];
+      if (id === 'alerts' || id === 'history') fetchRealtimeAlerts();
     }
 
     let chartsInitialized = false;
@@ -255,6 +285,106 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
+
+    // Modal phóng to ảnh bằng chứng
+    function openModal(src) {
+      if (!src) return;
+      document.getElementById("modalImg").src = src;
+      document.getElementById("imageModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("imageModal").style.display = "none";
+    }
+
+    // Hàm gọi API lấy dữ liệu thực tế từ Database Render
+    async function fetchRealtimeAlerts() {
+      try {
+        const res = await fetch('/api/alerts');
+        if (!res.ok) return;
+        const result = await res.json();
+        
+        if (result.status === "success" && Array.isArray(result.data)) {
+          const alerts = result.data;
+          
+          // 1. Cập nhật số đếm trên thẻ Dashboard
+          const alertCountCard = document.getElementById('alertCountCard');
+          const alertStatusText = document.getElementById('alertStatusText');
+          if (alertCountCard) alertCountCard.textContent = alerts.length;
+          if (alertStatusText) {
+            if (alerts.length > 0) {
+              alertStatusText.textContent = "● Cần kiểm tra";
+              alertStatusText.className = "red";
+            } else {
+              alertStatusText.textContent = "● An toàn";
+              alertStatusText.className = "green";
+            }
+          }
+
+          // 2. Render danh sách thẻ Cảnh báo AI
+          const alertsContainer = document.getElementById('alertsContainer');
+          if (alertsContainer) {
+            if (alerts.length === 0) {
+              alertsContainer.innerHTML = `<div class="empty-state">Hiện không có cảnh báo xâm nhập nào. Nông trại an toàn!</div>`;
+            } else {
+              alertsContainer.innerHTML = alerts.map(a => {
+                const isSnake = a.target_type === 'ran';
+                const icon = isSnake ? '🔴' : '🟠';
+                const label = isSnake ? 'Phát hiện Rắn' : 'Phát hiện Chuột';
+                const cardClass = isSnake ? 'alert-card' : 'alert-card warning';
+                const confPercent = Math.round(a.confidence * 100);
+                const timeStr = a.created_at ? new Date(a.created_at).toLocaleString('vi-VN') : 'Vừa xong';
+                const imgTag = a.image_base64 
+                  ? `<img src="${a.image_base64}" class="alert-thumb" onclick="openModal('${a.image_base64}')" title="Bấm để xem ảnh lớn">`
+                  : `<span style="font-size:12px;color:#999;">(Không có ảnh)</span>`;
+
+                return `
+                  <div class="${cardClass}">
+                    <div>
+                      <b style="font-size:16px;">${icon} AI Laptop — ${label}</b><br>
+                      <small style="color: #666;">Độ tin cậy: <strong>${confPercent}%</strong> · Thời gian: ${timeStr}</small>
+                    </div>
+                    <div>${imgTag}</div>
+                  </div>
+                `;
+              }).join('');
+            }
+          }
+
+          // 3. Render bảng Lịch sử phát hiện
+          const historyTableBody = document.getElementById('historyTableBody');
+          if (historyTableBody) {
+            if (alerts.length === 0) {
+              historyTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888;">Chưa ghi nhận sự kiện nào</td></tr>`;
+            } else {
+              historyTableBody.innerHTML = alerts.map(a => {
+                const isSnake = a.target_type === 'ran';
+                const targetText = isSnake ? '🐍 Rắn' : '🐀 Chuột';
+                const confClass = isSnake ? 'red' : 'orange';
+                const timeStr = a.created_at ? new Date(a.created_at).toLocaleString('vi-VN') : '---';
+                const imgThumb = a.image_base64 
+                  ? `<img src="${a.image_base64}" style="width: 45px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="openModal('${a.image_base64}')">`
+                  : '—';
+
+                return `
+                  <tr>
+                    <td>${timeStr}</td>
+                    <td>Khu nuôi Cu gáy</td>
+                    <td><strong>${targetText}</strong></td>
+                    <td class="${confClass}">${Math.round(a.confidence * 100)}%</td>
+                    <td>${imgThumb}</td>
+                  </tr>
+                `;
+              }).join('');
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi cập nhật cảnh báo:", err);
+      }
+    }
+
+    // Tự động quét cập nhật dữ liệu mới mỗi 3 giây
+    setInterval(fetchRealtimeAlerts, 3000);
   </script>
 </body>
 </html>
